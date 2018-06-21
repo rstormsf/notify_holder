@@ -12,9 +12,9 @@ const bot = new Telegraf(process.env.BOT_TOKEN)
 const isAdmin = async function(ctx, next) {
   console.log(ctx.from.username)
   if(ctx.from.username === 'rstormsf' || ctx.from.username === 'collincrypto') {
-    await next()
+    return await next()
   } else {
-    ctx.reply('Only admin can manage this chat');
+    return ctx.reply('Only admin can manage this chat');
   }
 }
 
@@ -22,13 +22,13 @@ const isAdmin = async function(ctx, next) {
 //set tokenaddress
 const setTokenAddress = new Scene('set_token_address')
 setTokenAddress.enter(async (ctx) => {
-  ctx.reply(`Please enter new token address to watch
+  return ctx.reply(`Please enter new token address to watch
   Enter /cancel to exit
   `)
 })
 setTokenAddress.leave(async (ctx) => {
   const tokenaddress = await readTokenAddress();
-  ctx.reply(`Current token address is: ${JSON.stringify(tokenaddress,  null, "\n")}`)
+  return ctx.reply(`Current token address is: ${JSON.stringify(tokenaddress,  null, "\n")}`)
 })
 setTokenAddress.on('message', (ctx) => {
   const newValue = ctx.update.message.text
@@ -44,23 +44,23 @@ setTokenAddress.on('message', (ctx) => {
 //set threshold
 const setThreshold = new Scene('set_threshold')
 setThreshold.enter(async (ctx) => {
-  ctx.reply(`Please enter new threshold
+  return ctx.reply(`Please enter new threshold
   Enter /cancel to exit
   `)
 })
 setThreshold.leave(async (ctx) => {
   const threshold = await readThreshold();
-  ctx.reply(`Current threshold (18 decimals) is:\n ${JSON.stringify(Web3Utils.fromWei(threshold.value),  null, "\n")}`)
+  return ctx.reply(`Current threshold (18 decimals) is:\n ${JSON.stringify(Web3Utils.fromWei(threshold.value),  null, "\n")}`)
 })
 setThreshold.on('message', (ctx) => {
   let newValue = ctx.update.message.text
   if(isNaN(newValue)){
     ctx.reply('Wrong value. Has to be number with token decimals applied. Example: decimals = 18. 1 = 10**18')
-    ctx.scene.reenter();
+    return ctx.scene.reenter();
   } else {
     newValue = Web3Utils.toWei(newValue)
     writeNewThreshold(newValue);
-    ctx.scene.leave()
+    return ctx.scene.leave()
   }
 })
 
@@ -68,45 +68,45 @@ setThreshold.on('message', (ctx) => {
 const addEthAddress = new Scene('add_eth_address')
 addEthAddress.enter(async (ctx) => {
   
-  ctx.reply(`Please enter eth address to add
+  return ctx.reply(`Please enter eth address to add
   Enter /cancel to exit
   `)
 })
 addEthAddress.leave(async (ctx) => {
   const addresses = await readAddress();
-  ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, " ")}`)
+  return ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, " ")}`)
 })
 addEthAddress.on('message', (ctx) => {
   const address = ctx.update.message.text;
   if(Web3Utils.isAddress(address)){
     writeNewAddress(ctx.update.message.text);
     ctx.reply('Added!')
-    ctx.scene.leave()
+    return ctx.scene.leave()
   } else {
     ctx.reply('Wrong eth address')
-    ctx.scene.reenter();
+    return ctx.scene.reenter();
   }
 })
 
 // remove scene
 const removeEthAddress = new Scene('remove_eth_address')
 removeEthAddress.enter(async (ctx) => {
-  ctx.reply(`Please enter eth address to remove
+  return ctx.reply(`Please enter eth address to remove
   Enter /cancel to exit
   `)
 })
 removeEthAddress.leave(async (ctx) => {
   const addresses = await readAddress();
-  ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, " ")}`)
+  return ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, " ")}`)
 })
 removeEthAddress.on('message', (ctx) => {
   const newValue = ctx.update.message.text;
   if(Web3Utils.isAddress(newValue)) {
     deleteAddress(ctx.update.message.text);
-    ctx.scene.leave()
+    return ctx.scene.leave()
   } else {
     ctx.reply("not valid eth address");
-    ctx.scene.reenter();
+    return ctx.scene.reenter();
   }
 })
 
@@ -140,11 +140,11 @@ bot.command('add_eth_address', (ctx) => ctx.scene.enter('add_eth_address'))
 bot.command('remove_eth_address', (ctx) => ctx.scene.enter('remove_eth_address'))
 bot.command('show_addresses_to_watch', async (ctx) => {
   const addresses = await readAddress();
-  ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, " ")}`)
+  return ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, " ")}`)
 })
 bot.command('show_current_threshold', async (ctx) => {
   let threshold = await readThreshold();
-  ctx.reply(`Current threshold (18 decimals) is: ${JSON.stringify(Web3Utils.fromWei(threshold.value),  null, "\n")}`)
+  return ctx.reply(`Current threshold (18 decimals) is: ${JSON.stringify(Web3Utils.fromWei(threshold.value),  null, "\n")}`)
 })
 
 bot.startPolling()
