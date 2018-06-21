@@ -6,6 +6,7 @@ const { leave } = Stage
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./db.sqlite');
 const Web3Utils = require('web3-utils');
+require('dotenv').config()
 
 //set tokenaddress
 const setTokenAddress = new Scene('set_token_address')
