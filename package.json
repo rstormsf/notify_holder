@@ -1,0 +1,17 @@
+{
+  "name": "notify_holders",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^6.0.0",
+    "sqlite3": "^4.0.0",
+    "telegraf": "^3.21.2",
+    "web3": "^1.0.0-beta.34"
+  }
+}
