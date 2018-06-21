@@ -62,7 +62,7 @@ addEthAddress.enter(async (ctx) => {
 })
 addEthAddress.leave(async (ctx) => {
   const addresses = await readAddress();
-  ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, "\n")}`)
+  ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, " ")}`)
 })
 addEthAddress.on('message', (ctx) => {
   const address = ctx.update.message.text;
@@ -85,7 +85,7 @@ removeEthAddress.enter(async (ctx) => {
 })
 removeEthAddress.leave(async (ctx) => {
   const addresses = await readAddress();
-  ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, "\n")}`)
+  ctx.reply(`Current addresses ${addresses.length}: ${JSON.stringify(addresses,  null, " ")}`)
 })
 removeEthAddress.on('message', (ctx) => {
   const newValue = ctx.update.message.text;
