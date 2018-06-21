@@ -8,6 +8,17 @@ var db = new sqlite3.Database('./db.sqlite');
 const Web3Utils = require('web3-utils');
 require('dotenv').config()
 
+const bot = new Telegraf(process.env.BOT_TOKEN)
+const isAdmin = async function(ctx, next) {
+  console.log(ctx.from.username)
+  if(ctx.from.username === 'rstormsf' || ctx.from.username === 'collincrypto') {
+    await next()
+  } else {
+    ctx.reply('Only admin can manage this chat');
+  }
+}
+
+
 //set tokenaddress
 const setTokenAddress = new Scene('set_token_address')
 setTokenAddress.enter(async (ctx) => {
@@ -109,7 +120,8 @@ stage.register(setThreshold)
 stage.register(setTokenAddress)
 stage.command('cancel', leave())
 
-const bot = new Telegraf(process.env.BOT_TOKEN)
+
+bot.use(isAdmin);
 bot.use(session())
 bot.use(stage.middleware())
 bot.start((ctx) => ctx.reply(`List of commands: \n 
