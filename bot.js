@@ -7,6 +7,9 @@ var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./db.sqlite');
 const Web3Utils = require('web3-utils');
 require('dotenv').config()
+const BN = Web3Utils.BN;
+const TOKEN_DECIMALS = process.env.TOKEN_DECIMALS;
+const decimals = new BN('10').pow(new BN(TOKEN_DECIMALS.toString()))
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 const isAdmin = async function(ctx, next) {
@@ -36,7 +39,7 @@ setTokenAddress.on('message', (ctx) => {
     ctx.reply('Wrong value. Has to be valid ETH address')
     return ctx.scene.reenter();
   } else {
-    writeNewTokenAddress(newValue);
+    writeNewTokenAddress(Web3Utils.toChecksumAddress(newValue));
     return ctx.scene.leave()
   }
 })
@@ -49,8 +52,9 @@ setThreshold.enter(async (ctx) => {
   `)
 })
 setThreshold.leave(async (ctx) => {
-  const threshold = await readThreshold();
-  return ctx.reply(`Current threshold (18 decimals) is:\n ${JSON.stringify(Web3Utils.fromWei(threshold.value),  null, "\n")}`)
+  let threshold = await readThreshold();
+  threshold = (new BN(threshold.value).div(decimals)).toString();
+  return ctx.reply(`Current threshold (${TOKEN_DECIMALS} decimals) is:\n ${threshold}`)
 })
 setThreshold.on('message', (ctx) => {
   let newValue = ctx.update.message.text
@@ -58,7 +62,8 @@ setThreshold.on('message', (ctx) => {
     ctx.reply('Wrong value. Has to be number with token decimals applied. Example: decimals = 18. 1 = 10**18')
     return ctx.scene.reenter();
   } else {
-    newValue = Web3Utils.toWei(newValue)
+   
+    newValue = new BN(newValue).mul(decimals).toString()
     writeNewThreshold(newValue);
     return ctx.scene.leave()
   }
@@ -144,7 +149,8 @@ bot.command('show_addresses_to_watch', async (ctx) => {
 })
 bot.command('show_current_threshold', async (ctx) => {
   let threshold = await readThreshold();
-  return ctx.reply(`Current threshold (18 decimals) is: ${JSON.stringify(Web3Utils.fromWei(threshold.value),  null, "\n")}`)
+  threshold = (new BN(threshold.value).div(decimals)).toString();
+  return ctx.reply(`Current threshold (${TOKEN_DECIMALS} decimals) is: ${threshold}`)
 })
 
 bot.startPolling()
@@ -155,7 +161,9 @@ async function readAddress(){
     db.serialize(function() {
       db.all("SELECT address, balance FROM addresses", function(err, rows) {
         rows = rows.map(({address, balance}) => {
-          return {address, balance: Web3Utils.fromWei(balance)}
+          balance = new BN(balance).divmod(decimals);
+          balance = `${balance.div.toString()}.${balance.mod.toString()}`
+          return {address, balance}
         })
         res(rows);
         if(err){
@@ -196,6 +204,7 @@ async function readTokenAddress(){
 
 async function writeNewAddress(address) {
   try {
+    address = Web3Utils.toChecksumAddress(address);
     var stmt = db.prepare("INSERT INTO addresses VALUES (?, ?)");
     stmt.run([address, '0'], (error, som) => console.log(error, som));
     stmt.finalize();

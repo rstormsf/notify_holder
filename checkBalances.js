@@ -1,7 +1,12 @@
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./db.sqlite');
 const Web3Utils = require('web3-utils');
+const BN = Web3Utils.BN;
 require('dotenv').config()
+const TOKEN_DECIMALS = process.env.TOKEN_DECIMALS;
+const INTERVAL = process.env.INTERVAL;
+const decimals = new BN('10').pow(new BN(TOKEN_DECIMALS.toString()))
+
 
 const Telegraf = require('telegraf')
 
@@ -11,25 +16,27 @@ const chatId = process.env.CHAT_ID;
 async function main() {
   let threshold = await readThreshold();
   threshold = new Web3Utils.BN(threshold.value.toString());
+  let thresholdWithDecimals = (new BN(threshold).div(decimals)).toString();
   const addresses = await readAddress();
   
   addresses.forEach(async (record) => {
     const balance = new Web3Utils.BN(record.balance);
     const timeNow = Math.floor(Date.now()/1000);
+    let balanceWithMod = new BN(balance).divmod(decimals);
+    balanceWithMod = `${balanceWithMod.div.toString()}.${balanceWithMod.mod.toString()}`
     if(threshold.gt(balance)){
       console.log('balance below', record.balance, threshold.toString(), timeNow)
       const notif = await readNotification(record.address);
       console.log(notif)
       if(notif.length === 0){
         console.log('writing')
-        notifyTg(`Address ${record.address} has below threshold(${Web3Utils.fromWei(threshold.toString())}) balance: ${Web3Utils.fromWei(record.balance)}`)
+        notifyTg(`Address ${record.address} has below threshold(${thresholdWithDecimals}) balance: ${balanceWithMod}`)
         await writeNotification(record.address, timeNow);
       } else {
         const timeDiff = timeNow - Number(notif[0].value);
-        const hours12 = 1800;
-        if(timeDiff > hours12){
+        if(timeDiff > INTERVAL){
           console.log('notifying')
-          notifyTg(`Address ${record.address} has below threshold(${Web3Utils.fromWei(threshold.toString())}) balance: ${Web3Utils.fromWei(record.balance)}`)
+          notifyTg(`Address ${record.address} has below threshold(${thresholdWithDecimals}) balance: ${balanceWithMod}`)
           await updateNotification(record.address, timeNow);
         }
       }
