@@ -5,4 +5,3 @@ node balance_updater.js
 node checkBalances.js
 
 node bot.js
-
